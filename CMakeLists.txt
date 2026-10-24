@@ -45,11 +45,13 @@ set_target_properties(skia PROPERTIES
 
 add_executable(tuix
     src/main.cpp
+    src/rendering/skia_renderer.cpp
 )
 
 # Engine headers
 target_include_directories(tuix PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 

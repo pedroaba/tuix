@@ -9,7 +9,9 @@
 #include "include/core/SkPixmap.h"
 #include "include/core/SkSurface.h"
 
+#include "rendering/skia_renderer.hpp"
 #include "tuix/core/print.hpp"
+#include "tuix/rendering/renderer.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
@@ -167,14 +169,19 @@ int main(int argc, char *args[]) {
     return 1;
   }
 
+  tuix::TSkiaRenderer skiaRenderer(*canvas);
+  tuix::TRenderer &uiRenderer = skiaRenderer;
+
   // cleanup canvas com uma cor branca
-  canvas->clear(SK_ColorWHITE);
-  SkPaint paint;
+  uiRenderer.Clear({255, 255, 255, 255});
+  uiRenderer.FillRoundedRect({40, 40, 180, 60}, 8, {0, 0, 255, 255});
 
-  paint.setColor(SK_ColorBLUE);
-  paint.setAntiAlias(true);
+  // SkPaint paint;
 
-  canvas->drawRoundRect(SkRect::MakeXYWH(40, 40, 180, 60), 8, 8, paint);
+  // paint.setColor(SK_ColorBLUE);
+  // paint.setAntiAlias(true);
+
+  // canvas->drawRoundRect(SkRect::MakeXYWH(40, 40, 180, 60), 8, 8, paint);
 
   SkPixmap pixmap;
   if (!surface->peekPixels(&pixmap)) {
