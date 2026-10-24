@@ -1,0 +1,84 @@
+
+# ==========================================
+# TUIX Engine - Git Ignore
+# ==========================================
+
+# CMake - Build directories
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+
+# CMake - Generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+build.ninja
+.ninja_deps
+.ninja_log
+
+# Clangd / Clang
+.cache/
+.clangd/
+*.pch
+*.gch
+*.pcm
+*.d
+
+# Compilation database
+# Keep the generated file inside build/ ignored.
+# Allow a root symlink for Clangd.
+!/compile_commands.json
+
+# Compiled binaries and libraries
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app/
+*.dSYM/
+
+# Debugging and profiling
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+*.gcov
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
