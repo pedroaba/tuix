@@ -8,6 +8,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Gera as informações para o Clangd do Cursor
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(SKIA_DIR "" CACHE PATH "Path to Skia")
+
+add_library(skia STATIC IMPORTED)
+
+set_target_properties(skia PROPERTIES
+    IMPORTED_LOCATION "${SKIA_DIR}/out/Learning/libskia.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${SKIA_DIR}"
+)
+
 # Localiza a SDL3
 find_package(SDL3 REQUIRED CONFIG)
 
@@ -18,6 +27,7 @@ add_executable(tuix
 # Vincula a biblioteca SDL3
 target_link_libraries(tuix PRIVATE
     SDL3::SDL3
+    skia
 )
 
 # Disponibiliza os headers da engine
