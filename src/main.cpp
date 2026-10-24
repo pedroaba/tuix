@@ -191,8 +191,12 @@ int main(int argc, char *args[]) {
     return 1;
   }
 
-  SDL_UpdateTexture(texture, nullptr, pixmap.addr(),
-                    static_cast<int>(pixmap.rowBytes()));
+  isSuccessOperation = SDL_UpdateTexture(texture, nullptr, pixmap.addr(),
+                                         static_cast<int>(pixmap.rowBytes()));
+  if (!isSuccessOperation) {
+    SDL_Log("Texture update failed: %s", SDL_GetError());
+    CleanupSDL(window, renderer, texture);
+  }
 
   SDL_AddEventWatch(OnWindowEvent, window);
   while (isRunningApplication) {
