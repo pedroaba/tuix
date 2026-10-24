@@ -17,7 +17,6 @@ install_manifest.txt
 CTestTestfile.cmake
 CPackConfig.cmake
 CPackSourceConfig.cmake
-Makefile
 build.ninja
 .ninja_deps
 .ninja_log
