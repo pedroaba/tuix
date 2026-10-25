@@ -1,215 +1,110 @@
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <cstddef>
 
-#include "include/core/SkCanvas.h"
-#include "include/core/SkColor.h"
-#include "include/core/SkImageInfo.h"
-#include "include/core/SkPaint.h"
-#include "include/core/SkPixmap.h"
-#include "include/core/SkSurface.h"
-
-#include "rendering/skia_renderer.hpp"
-#include "tuix/core/print.hpp"
-#include "tuix/rendering/renderer.hpp"
+#include "rendering/render_context.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
+constexpr const char *APP_NAME = "TUIX ENGINE";
 
-const char *APP_NAME = "TUIX ENGINE";
-
-bool isRunningApplication = true;
-
-bool SDLCALL OnWindowEvent(void *userdata, SDL_Event *event) {
-  if (event->type == SDL_EVENT_WINDOW_EXPOSED && event->window.data1 == 1) {
-    auto *window = static_cast<SDL_Window *>(userdata);
-
-    int width = 0;
-    int height = 0;
-
-    SDL_GetWindowSize(window, &width, &height);
-
-    tuix::tprint("Resizing: ", width, "x", height);
-  }
-
-  return true;
-}
-
-void CleanupSDL(SDL_Window *window = nullptr, SDL_Renderer *renderer = nullptr,
-                SDL_Texture *texture = nullptr) {
-  if (window != nullptr) {
-    SDL_RemoveEventWatch(OnWindowEvent, window);
-  }
-
-  if (texture != nullptr) {
-    tuix::tprint("DESTRUINDO TEXTURA: ", SDL_GetTextureProperties(texture));
-    SDL_DestroyTexture(texture);
-  }
-
-  if (renderer != nullptr) {
-    tuix::tprint("DESTRUINDO RENDERER: ", SDL_GetRendererName(renderer));
-    SDL_DestroyRenderer(renderer);
-  }
-
-  if (window != nullptr) {
-    tuix::tprint("DESTRUINDO JANELA: ", SDL_GetWindowID(window));
-    SDL_DestroyWindow(window);
-  }
-
-  SDL_Quit();
-}
-
-void ProcessSDLEvents(SDL_Window *window) {
-  SDL_Event event;
-  int windowWidth = 0, windowHeight = 0;
-
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-    case SDL_EVENT_QUIT:
-      tuix::tprint("USUÁRIO FECHOU A APLICAÇÃO, BYE BYE");
-      isRunningApplication = false;
-      break;
-    case SDL_EVENT_WINDOW_RESIZED:
-      tuix::tprint("WINDOW WIDTH: ", event.window.data1);
-      tuix::tprint("WINDOW HEIGHT: ", event.window.data2);
-      break;
-    // case SDL_EVENT_WINDOW_MOVED:
-    //   tuix::tprint("WINDOW POSITION X: ", event.window.data1);
-    //   tuix::tprint("WINDOW POSITION Y: ", event.window.data2);
-    //   break;
-    case SDL_EVENT_WINDOW_EXPOSED:
-      SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-
-      tuix::tprint("WINDOW WIDTH: ", windowWidth);
-      tuix::tprint("WINDOW HEIGHT: ", windowHeight);
-      break;
-    case SDL_EVENT_WINDOW_FOCUS_GAINED:
-      tuix::tprint("USUÁRIO ESTÁ NA TELA");
-      break;
-    case SDL_EVENT_WINDOW_FOCUS_LOST:
-      tuix::tprint("USUÁRIO NÃO ESTÁ NA TELA");
-      break;
-    }
-  }
-}
-
-int main(int argc, char *args[]) {
-  bool isInitialized = SDL_Init(SDL_INIT_VIDEO);
-  if (!isInitialized) {
+int main(int argc, char *argv[]) {
+  // Initialize SDL
+  if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_Log("SDL Error: %s", SDL_GetError());
     return 1;
   }
 
+  // Create window
   SDL_Window *window = SDL_CreateWindow(APP_NAME, SCREEN_WIDTH, SCREEN_HEIGHT,
                                         SDL_WINDOW_RESIZABLE);
 
-  if (window == nullptr) {
+  if (!window) {
     SDL_Log("Window Error: %s", SDL_GetError());
-    CleanupSDL();
-
+    SDL_Quit();
     return 1;
   }
 
+  // Create SDL renderer
   SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
-  if (renderer == nullptr) {
+
+  if (!renderer) {
     SDL_Log("Renderer Error: %s", SDL_GetError());
-    CleanupSDL(window);
-
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 1;
   }
 
-  int width, height;
-  bool isSuccessOperation = SDL_GetWindowSizeInPixels(window, &width, &height);
-  if (!isSuccessOperation) {
-    SDL_Log("Window size error: %s", SDL_GetError());
-    CleanupSDL(window, renderer);
+  int exitCode = 0;
 
-    return 1;
+  {
+    // RenderContext owns the texture and Skia surface
+    tuix::TRenderContext graphics(renderer);
+
+    bool running = true;
+    bool needsResize = true;
+
+    while (running) {
+      SDL_Event event;
+
+      while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_EVENT_QUIT:
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+          running = false;
+          break;
+
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        case SDL_EVENT_RENDER_DEVICE_RESET:
+          needsResize = true;
+          break;
+
+        default:
+          break;
+        }
+      }
+
+      if (!running) {
+        break;
+      }
+
+      if (needsResize) {
+        int width = 0;
+        int height = 0;
+
+        if (!SDL_GetRenderOutputSize(renderer, &width, &height)) {
+          SDL_Log("Output size error: %s", SDL_GetError());
+          exitCode = 1;
+          break;
+        }
+
+        if (width <= 0 || height <= 0) {
+          SDL_Delay(16);
+          continue;
+        }
+
+        if (!graphics.Resize(width, height)) {
+          exitCode = 1;
+          break;
+        }
+
+        needsResize = false;
+      }
+
+      if (!graphics.RenderFrame() || !graphics.PresentFrame()) {
+        SDL_Log("Rendering failed: %s", SDL_GetError());
+        exitCode = 1;
+        break;
+      }
+
+      SDL_Delay(16);
+    }
   }
 
-  SDL_Texture *texture =
-      SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA32,
-                        SDL_TEXTUREACCESS_STREAMING, width, height);
+  // Graphics context is already destroyed here
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
 
-  if (texture == nullptr) {
-    SDL_Log("Texture error: %s", SDL_GetError());
-
-    CleanupSDL(window, renderer);
-    return 1;
-  }
-
-  void *pixels = nullptr;
-  int pitch = 0;
-
-  bool isTextureLock = SDL_LockTexture(texture, nullptr, &pixels, &pitch);
-  if (!isTextureLock) {
-    SDL_Log("Texture error: %s", SDL_GetError());
-    CleanupSDL(window, renderer, texture);
-
-    return 1;
-  }
-
-  SkImageInfo imageInfo = SkImageInfo::Make(
-      width, height, kBGRA_8888_SkColorType, kPremul_SkAlphaType);
-
-  auto surface = SkSurfaces::Raster(imageInfo);
-
-  if (surface == nullptr) {
-    CleanupSDL(window, renderer, texture);
-    SDL_Log("Failed to create Skia surface");
-
-    return 1;
-  }
-
-  SkCanvas *canvas = surface->getCanvas();
-  if (canvas == nullptr) {
-    CleanupSDL(window, renderer, texture);
-    SDL_Log("Failed to create Skia canvas");
-
-    return 1;
-  }
-
-  tuix::TSkiaRenderer skiaRenderer(*canvas);
-  tuix::TRenderer &uiRenderer = skiaRenderer;
-
-  // cleanup canvas com uma cor branca
-  uiRenderer.Clear({255, 255, 255, 255});
-  uiRenderer.FillRoundedRect({40, 40, 180, 60}, 8, {0, 0, 255, 255});
-
-  // SkPaint paint;
-
-  // paint.setColor(SK_ColorBLUE);
-  // paint.setAntiAlias(true);
-
-  // canvas->drawRoundRect(SkRect::MakeXYWH(40, 40, 180, 60), 8, 8, paint);
-
-  SkPixmap pixmap;
-  if (!surface->peekPixels(&pixmap)) {
-    SDL_Log("Failed to access Skia pixels");
-
-    CleanupSDL(window, renderer, texture);
-    return 1;
-  }
-
-  isSuccessOperation = SDL_UpdateTexture(texture, nullptr, pixmap.addr(),
-                                         static_cast<int>(pixmap.rowBytes()));
-  if (!isSuccessOperation) {
-    SDL_Log("Texture update failed: %s", SDL_GetError());
-    CleanupSDL(window, renderer, texture);
-  }
-
-  SDL_AddEventWatch(OnWindowEvent, window);
-  while (isRunningApplication) {
-    ProcessSDLEvents(window);
-
-    SDL_RenderClear(renderer);
-    SDL_RenderTexture(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
-
-    SDL_Delay(16); // irá mudar depois
-  }
-
-  CleanupSDL(window, renderer, texture);
-
-  return 0;
+  return exitCode;
 }

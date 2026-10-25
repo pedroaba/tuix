@@ -13,8 +13,9 @@ public:
   void Clear(tuix::Color color) override;
   void FillRoundedRect(tuix::Rect bounds, float radius,
                        tuix::Color color) override;
+  void ChangeCanvas(SkCanvas &canvas) override;
 
 private:
-  SkCanvas &canvas_;
+  SkCanvas *canvas_;
 };
 } // namespace tuix

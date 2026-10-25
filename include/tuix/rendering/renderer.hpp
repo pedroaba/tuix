@@ -3,6 +3,8 @@
 #include "tuix/rendering/color.hpp"
 #include "tuix/rendering/rect.hpp"
 
+class SkCanvas;
+
 namespace tuix {
 
 class TRenderer {
@@ -11,6 +13,7 @@ public:
   virtual void Clear(Color color) = 0;
   virtual void FillRoundedRect(tuix::Rect bounds, float radius,
                                tuix::Color color) = 0;
+  virtual void ChangeCanvas(SkCanvas &canvas) = 0;
 };
 
 } // namespace tuix

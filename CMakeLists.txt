@@ -46,6 +46,7 @@ set_target_properties(skia PROPERTIES
 add_executable(tuix
     src/main.cpp
     src/rendering/skia_renderer.cpp
+    src/rendering/render_context.cpp
 )
 
 # Engine headers

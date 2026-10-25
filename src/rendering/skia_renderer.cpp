@@ -13,10 +13,10 @@ SkRect FromTRect(tuix::Rect *rect) {
   return skRect;
 }
 
-TSkiaRenderer::TSkiaRenderer(SkCanvas &canvas) : canvas_(canvas) {}
+TSkiaRenderer::TSkiaRenderer(SkCanvas &canvas) : canvas_(&canvas) {}
 
 void TSkiaRenderer::Clear(Color color) {
-  canvas_.clear(
+  canvas_->clear(
       SkColorSetARGB(color.alpha, color.red, color.green, color.blue));
 }
 
@@ -28,7 +28,9 @@ void TSkiaRenderer::FillRoundedRect(tuix::Rect bounds, float radius,
   paint.setAntiAlias(true);
 
   SkRect rect = FromTRect(&bounds);
-  canvas_.drawRoundRect(rect, radius, radius, paint);
+  canvas_->drawRoundRect(rect, radius, radius, paint);
 }
+
+void TSkiaRenderer::ChangeCanvas(SkCanvas &canvas) { canvas_ = &canvas; }
 
 } // namespace tuix
