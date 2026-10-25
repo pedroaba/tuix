@@ -102,4 +102,36 @@ bool TRenderContext::PresentFrame() {
 
   return SDL_RenderPresent(renderer_);
 }
+
+bool TRenderContext::DrawCurrentFrame() {
+  // 1. Consultar o tamanho atual da saída SDL
+  int w = 0, h = 0;
+  if (!SDL_GetRenderOutputSize(renderer_, &w, &h)) {
+    SDL_Log("Failed to get output size: %s", SDL_GetError());
+    return false;
+  }
+
+  if (w <= 0 || h <= 0) {
+    return true;
+  }
+
+  if (w == currentRenderSize_.first && h == currentRenderSize_.second) {
+    return true;
+  }
+
+  // 2. Se mudou, executar Resize()
+  if (!Resize(w, h)) {
+    return false;
+  }
+
+  currentRenderSize_.first = w;
+  currentRenderSize_.second = h;
+
+  // 3. Executar RenderFrame() e PresentFrame()
+  if (!RenderFrame()) {
+    return false;
+  }
+
+  return PresentFrame();
+}
 } // namespace tuix

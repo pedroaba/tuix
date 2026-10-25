@@ -3,10 +3,23 @@
 #include <SDL3/SDL_main.h>
 
 #include "rendering/render_context.hpp"
+#include "tuix/core/print.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
 constexpr const char *APP_NAME = "TUIX ENGINE";
+
+bool SDLCALL OnWindowEvent(void *userdata, SDL_Event *event) {
+  if (event->type == SDL_EVENT_WINDOW_EXPOSED && event->window.data1 == 1) {
+    auto *context = static_cast<tuix::TRenderContext *>(userdata);
+
+    if (!context->DrawCurrentFrame()) {
+      SDL_Log("Failed to render during resize");
+    }
+  }
+
+  return true;
+}
 
 int main(int argc, char *argv[]) {
   // Initialize SDL
@@ -44,6 +57,7 @@ int main(int argc, char *argv[]) {
     bool running = true;
     bool needsResize = true;
 
+    SDL_AddEventWatch(OnWindowEvent, &graphics);
     while (running) {
       SDL_Event event;
 
@@ -99,6 +113,9 @@ int main(int argc, char *argv[]) {
 
       SDL_Delay(16);
     }
+
+    // limpando o evento
+    SDL_RemoveEventWatch(OnWindowEvent, &graphics);
   }
 
   // Graphics context is already destroyed here

@@ -2,11 +2,13 @@
 
 #include <SDL3/SDL.h>
 #include <memory>
+#include <utility>
 
 #include "include/core/SkRefCnt.h"
 #include "include/core/SkSurface.h"
 
 #include "rendering/skia_renderer.hpp"
+#include "tuix/rendering/rect.hpp"
 
 namespace tuix {
 class TRenderContext {
@@ -20,6 +22,7 @@ public:
   bool Resize(int width, int height);
   bool RenderFrame();
   bool PresentFrame();
+  bool DrawCurrentFrame();
 
 private:
   SDL_Renderer *renderer_ = nullptr;
@@ -27,5 +30,7 @@ private:
 
   sk_sp<SkSurface> surface_;
   std::unique_ptr<TSkiaRenderer> uiRenderer_;
+
+  std::pair<int, int> currentRenderSize_ = std::make_pair(0, 0);
 };
 } // namespace tuix
