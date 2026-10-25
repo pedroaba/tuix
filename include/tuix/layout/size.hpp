@@ -2,7 +2,7 @@
 
 namespace tuix {
 
-struct Size {
+struct TSize {
   float width = 0.0f;
   float height = 0.0f;
 };

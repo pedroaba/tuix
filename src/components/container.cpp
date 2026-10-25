@@ -18,7 +18,7 @@ void TContainer::AddChild(std::unique_ptr<TComponent> child) {
   children_.push_back(std::move(child));
 }
 
-Size TContainer::Measure() const {
+TSize TContainer::Measure() const {
   // formulas:
 
   // Vertical
@@ -72,12 +72,12 @@ Size TContainer::Measure() const {
     containerWidth += (2 * props_.padding) + (gapMultiplier * props_.gap);
   }
 
-  return tuix::Size{.width = containerWidth, .height = containerHeight};
+  return tuix::TSize{.width = containerWidth, .height = containerHeight};
 }
 
 int TContainer::GetTotalOfChildren() const { return children_.size(); }
 
-void TContainer::Arrange(Rect bounds) {
+void TContainer::Arrange(TRect bounds) {
   bounds_ = bounds;
 
   // 1. Identificar a direção
@@ -101,7 +101,7 @@ void TContainer::Arrange(Rect bounds) {
   float contentMainSize = 0.0f;
 
   for (const auto &child : children_) {
-    const Size childSize = child->Measure();
+    const TSize childSize = child->Measure();
 
     contentMainSize += isVertical ? childSize.height : childSize.width;
   }
@@ -150,7 +150,7 @@ void TContainer::Arrange(Rect bounds) {
 
   // 9. Posicionar cada filho
   for (const auto &child : children_) {
-    const Size childSize = child->Measure();
+    const TSize childSize = child->Measure();
 
     const float childCrossSize =
         isVertical ? childSize.width : childSize.height;
@@ -172,10 +172,10 @@ void TContainer::Arrange(Rect bounds) {
     }
 
     // 10. Construir o Rect final
-    Rect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
-                     .y = currentY + (isVertical ? 0.0f : crossOffset),
-                     .width = childSize.width,
-                     .height = childSize.height};
+    TRect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
+                      .y = currentY + (isVertical ? 0.0f : crossOffset),
+                      .width = childSize.width,
+                      .height = childSize.height};
 
     child->Arrange(childBounds);
 

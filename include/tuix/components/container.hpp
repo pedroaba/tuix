@@ -25,8 +25,8 @@ class TContainer final : public TComponent {
 public:
   explicit TContainer(TContainerProps props = {});
 
-  Size Measure() const override;
-  void Arrange(Rect bounds) override;
+  TSize Measure() const override;
+  void Arrange(TRect bounds) override;
 
   void AddChild(std::unique_ptr<TComponent> child);
 
@@ -38,7 +38,7 @@ private:
   std::vector<std::unique_ptr<TComponent>> children_;
 
   TContainerProps props_;
-  Rect bounds_{};
+  TRect bounds_{};
 };
 
 } // namespace tuix

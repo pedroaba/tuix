@@ -6,8 +6,8 @@
 namespace tuix {
 
 struct TBoxProps {
-  Size size;
-  Color background;
+  TSize size;
+  TColor background;
   float radius = 0.0f;
 };
 
@@ -15,14 +15,14 @@ class TBox final : public TComponent {
 public:
   explicit TBox(TBoxProps props);
 
-  Size Measure() const override;
-  void Arrange(Rect bounds) override;
+  TSize Measure() const override;
+  void Arrange(TRect bounds) override;
 
   void Paint(TRenderer &renderer) const override;
 
 private:
   TBoxProps props_;
-  Rect bounds_{};
+  TRect bounds_{};
 };
 
 } // namespace tuix

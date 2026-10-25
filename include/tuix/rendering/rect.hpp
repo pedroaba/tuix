@@ -2,7 +2,7 @@
 
 namespace tuix {
 
-struct Rect {
+struct TRect {
   float x;
   float y;
   float width;

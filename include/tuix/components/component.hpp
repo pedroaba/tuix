@@ -11,8 +11,8 @@ class TComponent {
 public:
   virtual ~TComponent() = default;
 
-  virtual Size Measure() const = 0;
-  virtual void Arrange(Rect bounds) = 0;
+  virtual TSize Measure() const = 0;
+  virtual void Arrange(TRect bounds) = 0;
 
   virtual void Paint(TRenderer &renderer) const = 0;
 };

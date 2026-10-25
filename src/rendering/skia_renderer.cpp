@@ -6,7 +6,7 @@
 #include <include/core/SkRect.h>
 
 namespace tuix {
-SkRect FromTRect(tuix::Rect *rect) {
+SkRect FromTRect(tuix::TRect *rect) {
   SkRect skRect = SkRect();
   skRect.setXYWH(rect->x, rect->y, rect->width, rect->height);
 
@@ -15,13 +15,13 @@ SkRect FromTRect(tuix::Rect *rect) {
 
 TSkiaRenderer::TSkiaRenderer(SkCanvas &canvas) : canvas_(&canvas) {}
 
-void TSkiaRenderer::Clear(Color color) {
+void TSkiaRenderer::Clear(TColor color) {
   canvas_->clear(
       SkColorSetARGB(color.alpha, color.red, color.green, color.blue));
 }
 
-void TSkiaRenderer::FillRoundedRect(tuix::Rect bounds, float radius,
-                                    tuix::Color color) {
+void TSkiaRenderer::FillRoundedRect(tuix::TRect bounds, float radius,
+                                    tuix::TColor color) {
   SkPaint paint;
 
   paint.setARGB(color.alpha, color.red, color.green, color.blue);
