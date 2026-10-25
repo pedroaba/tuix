@@ -5,8 +5,12 @@ namespace tuix {
 
 TBox::TBox(TBoxProps props) : props_(props) {}
 
+tuix::Size TBox::Measure() const { return props_.size; }
+
+void TBox::Arrange(tuix::Rect rect) { bounds_ = rect; }
+
 void TBox::Paint(TRenderer &renderer) const {
-  renderer.FillRoundedRect(props_.bounds, props_.radius, props_.background);
+  renderer.FillRoundedRect(bounds_, props_.radius, props_.background);
 }
 
 } // namespace tuix
