@@ -1,4 +1,5 @@
 #include "tuix/components/container.hpp"
+#include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
 #include "tuix/layout/size.hpp"
 
@@ -62,7 +63,7 @@ Size TContainer::Measure() const {
     // Adicionar padding nas duas extremidades
     float gapMultiplier = std::max(0, totalOfChildren - 1);
     containerHeight += (2 * props_.padding) + (gapMultiplier * props_.gap);
-  } else if (props_.direction == tuix::TLayoutDirection::Vertical) {
+  } else if (props_.direction == tuix::TLayoutDirection::Horizontal) {
     // Adicionar gaps somente entre os filhos
     containerHeight += 2 * props_.padding;
 
@@ -87,14 +88,48 @@ void TContainer::Arrange(Rect bounds) {
 
   // 3. Percorrer children_
   const int totalOfChildren = GetTotalOfChildren();
+  const float availableWidth = bounds_.width - (2.0f * props_.padding);
+  const float availableHeight = bounds_.height - (2.0f * props_.padding);
+
   for (int i = 0; i < totalOfChildren; i++) {
     // 4. Consultar Measure() de cada filho
     Size childSize = children_.at(i)->Measure();
 
+    float offsetX = 0.0f;
+    float offsetY = 0.0f;
+    const bool isVertical = props_.direction == TLayoutDirection::Vertical;
+
+    // Espaço livre no eixo transversal
+    const float availableSize = isVertical ? availableWidth : availableHeight;
+    const float childCrossSize =
+        isVertical ? childSize.width : childSize.height;
+
+    float offset = 0.0f;
+
+    switch (props_.alignment) {
+    case TLayoutAlignment::Start:
+      offset = 0.0f;
+      break;
+
+    case TLayoutAlignment::Center:
+      offset = (availableSize - childCrossSize) / 2.0f;
+      break;
+
+    case TLayoutAlignment::End:
+      offset = availableSize - childCrossSize;
+      break;
+    }
+
+    if (isVertical) {
+      offsetX = offset;
+    } else {
+      offsetY = offset;
+    }
+
     // 5. Chamar Arrange() passando o Rect calculado
     Rect childBounds = Rect({
-        .x = currentX,
-        .y = currentY,
+        .x = currentX + offsetX,
+        .y = currentY + offsetY,
         .width = childSize.width,
         .height = childSize.height,
     });
@@ -102,13 +137,10 @@ void TContainer::Arrange(Rect bounds) {
     children_.at(i)->Arrange(childBounds);
 
     // 6. Avançar Y usando altura + gap
-    switch (props_.direction) {
-    case tuix::TLayoutDirection::Horizontal:
-      currentX += props_.gap + childSize.width;
-      break;
-    case tuix::TLayoutDirection::Vertical:
-      currentY += props_.gap + childSize.height;
-      break;
+    if (isVertical) {
+      currentY += childSize.height + props_.gap;
+    } else {
+      currentX += childSize.width + props_.gap;
     }
   }
 }

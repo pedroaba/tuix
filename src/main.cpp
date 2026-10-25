@@ -6,6 +6,7 @@
 #include "rendering/render_context.hpp"
 #include "tuix/components/box.hpp"
 #include "tuix/components/container.hpp"
+#include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
@@ -54,7 +55,8 @@ int main(int argc, char *argv[]) {
   int exitCode = 0;
 
   {
-    tuix::TContainer root = tuix::TContainer({.gap = 4.0f});
+    tuix::TContainer root = tuix::TContainer(
+        {.gap = 4.0f, .alignment = tuix::TLayoutAlignment::Start});
 
     tuix::TContainer horizontal =
         tuix::TContainer({.padding = 0.0f,
