@@ -4,6 +4,7 @@
 
 #include "rendering/render_context.hpp"
 #include "tuix/components/box.hpp"
+#include "tuix/components/container.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
@@ -51,13 +52,25 @@ int main(int argc, char *argv[]) {
   int exitCode = 0;
 
   {
-    tuix::TBox box({.bounds = {40, 40, 180, 60},
-                    .background = {0, 0, 255, 255},
-                    .radius = 8});
+    tuix::TContainer root;
+    root.AddChild(std::make_unique<tuix::TBox>(
+        tuix::TBoxProps{.bounds = {40, 40, 180, 60},
+                        .background = {0, 0, 255, 255},
+                        .radius = 8}));
+
+    root.AddChild(std::make_unique<tuix::TBox>(
+        tuix::TBoxProps{.bounds = {40, 120, 180, 60},
+                        .background = {0, 255, 0, 255},
+                        .radius = 8}));
+
+    root.AddChild(std::make_unique<tuix::TBox>(
+        tuix::TBoxProps{.bounds = {40, 200, 180, 60},
+                        .background = {255, 0, 0, 255},
+                        .radius = 8}));
 
     // RenderContext owns the texture and Skia surface
     tuix::TRenderContext graphics(renderer);
-    graphics.SetRoot(box);
+    graphics.SetRoot(root);
 
     bool running = true;
     bool needsResize = true;
