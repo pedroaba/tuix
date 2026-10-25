@@ -73,7 +73,8 @@ bool TRenderContext::RenderFrame() {
   TRenderer &renderer = *uiRenderer_;
   renderer.Clear({255, 255, 255, 255});
 
-  root_->Arrange({0.0f, 0.0f, static_cast<float>(surface_->width()),
+  root_->Arrange({tuix::make_default_float(), tuix::make_default_float(),
+                  static_cast<float>(surface_->width()),
                   static_cast<float>(surface_->height())});
   root_->Paint(renderer);
 

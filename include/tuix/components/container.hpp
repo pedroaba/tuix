@@ -4,12 +4,13 @@
 #include <vector>
 
 #include "tuix/components/component.hpp"
+#include "tuix/core/utility/conversions.hpp"
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
 #include "tuix/layout/justify.hpp"
 
-constexpr float DEFAULT_TCONTAINER_PADDING = 16.0f;
-constexpr float DEFAULT_TCONTAINER_GAP = 12.0f;
+constexpr float DEFAULT_TCONTAINER_PADDING = tuix::convert_to_float(16);
+constexpr float DEFAULT_TCONTAINER_GAP = tuix::convert_to_float(12);
 
 namespace tuix {
 

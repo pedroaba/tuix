@@ -1,4 +1,6 @@
 #include "tuix/components/container.hpp"
+#include "tuix/core/factory/float.hpp"
+#include "tuix/core/utility/conversions.hpp"
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
 #include "tuix/layout/size.hpp"
@@ -31,8 +33,8 @@ TSize TContainer::Measure() const {
 
   // Descobrir a maior largura entre os filhos
   const int totalOfChildren = GetTotalOfChildren();
-  float containerWidth = 0.0f;
-  float containerHeight = 0.0f;
+  float containerWidth = tuix::make_default_float();
+  float containerHeight = tuix::make_default_float();
 
   for (int i = 0; i < totalOfChildren; i++) {
     float currentChildWidth = children_.at(i)->Measure().width;
@@ -85,11 +87,11 @@ void TContainer::Arrange(TRect bounds) {
   const int totalOfChildren = GetTotalOfChildren();
 
   // 2. Calcular a área interna
-  const float availableWidth =
-      std::max(0.0f, bounds_.width - (2.0f * props_.padding));
+  const float availableWidth = std::max(
+      0.0f, bounds_.width - (tuix::convert_to_float(2) * props_.padding));
 
-  const float availableHeight =
-      std::max(0.0f, bounds_.height - (2.0f * props_.padding));
+  const float availableHeight = std::max(
+      0.0f, bounds_.height - (tuix::convert_to_float(2) * props_.padding));
 
   // 3. Identificar os eixos
   const float availableMainSize = isVertical ? availableHeight : availableWidth;
@@ -98,7 +100,7 @@ void TContainer::Arrange(TRect bounds) {
       isVertical ? availableWidth : availableHeight;
 
   // 4. Calcular o tamanho total dos filhos
-  float contentMainSize = 0.0f;
+  float contentMainSize = tuix::make_default_float();
 
   for (const auto &child : children_) {
     const TSize childSize = child->Measure();
@@ -112,10 +114,11 @@ void TContainer::Arrange(TRect bounds) {
   contentMainSize += gapCount * props_.gap;
 
   // 6. Calcular o espaço livre
-  const float freeSpace = std::max(0.0f, availableMainSize - contentMainSize);
+  const float freeSpace =
+      std::max(tuix::make_default_float(), availableMainSize - contentMainSize);
 
   // 7. Resolver o justify
-  float mainOffset = 0.0f;
+  float mainOffset = tuix::make_default_float();
   float effectiveGap = props_.gap;
 
   switch (props_.justify) {
@@ -123,7 +126,7 @@ void TContainer::Arrange(TRect bounds) {
     break;
 
   case TLayoutJustify::Center:
-    mainOffset = freeSpace / 2.0f;
+    mainOffset = freeSpace / tuix::convert_to_float(2);
     break;
 
   case TLayoutJustify::End:
@@ -156,14 +159,15 @@ void TContainer::Arrange(TRect bounds) {
         isVertical ? childSize.width : childSize.height;
 
     // Resolver o alignment individual
-    float crossOffset = 0.0f;
+    float crossOffset = tuix::make_default_float();
 
     switch (props_.alignment) {
     case TLayoutAlignment::Start:
       break;
 
     case TLayoutAlignment::Center:
-      crossOffset = (availableCrossSize - childCrossSize) / 2.0f;
+      crossOffset =
+          (availableCrossSize - childCrossSize) / tuix::convert_to_float(2);
       break;
 
     case TLayoutAlignment::End:
@@ -172,10 +176,11 @@ void TContainer::Arrange(TRect bounds) {
     }
 
     // 10. Construir o Rect final
-    TRect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
-                      .y = currentY + (isVertical ? 0.0f : crossOffset),
-                      .width = childSize.width,
-                      .height = childSize.height};
+    TRect childBounds{
+        .x = currentX + (isVertical ? crossOffset : tuix::make_default_float()),
+        .y = currentY + (isVertical ? tuix::make_default_float() : crossOffset),
+        .width = childSize.width,
+        .height = childSize.height};
 
     child->Arrange(childBounds);
 
