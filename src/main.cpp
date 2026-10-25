@@ -3,7 +3,6 @@
 #include <SDL3/SDL_main.h>
 
 #include "rendering/render_context.hpp"
-#include "tuix/core/print.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;

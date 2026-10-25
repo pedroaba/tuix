@@ -8,7 +8,6 @@
 #include "include/core/SkSurface.h"
 
 #include "rendering/skia_renderer.hpp"
-#include "tuix/rendering/rect.hpp"
 
 namespace tuix {
 class TRenderContext {
