@@ -47,6 +47,7 @@ add_executable(tuix
     src/main.cpp
     src/rendering/skia_renderer.cpp
     src/rendering/render_context.cpp
+    src/components/box.cpp
 )
 
 # Engine headers

@@ -5,6 +5,8 @@
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkPixmap.h"
 
+#include "tuix/components/component.hpp"
+
 namespace tuix {
 
 TRenderContext::TRenderContext(SDL_Renderer *renderer) : renderer_(renderer) {}
@@ -63,12 +65,17 @@ bool TRenderContext::RenderFrame() {
     return false;
   }
 
+  if (root_ == nullptr) {
+    SDL_Log("No root component configured");
+    return false;
+  }
+
   TRenderer &renderer = *uiRenderer_;
   renderer.Clear({255, 255, 255, 255});
-  renderer.FillRoundedRect({40, 40, 180, 60}, 8, {0, 0, 255, 255});
+
+  root_->Paint(renderer);
 
   SkPixmap pixmap;
-
   if (!surface_->peekPixels(&pixmap)) {
     SDL_Log("Failed to access Skia pixels");
     return false;
@@ -138,4 +145,6 @@ bool TRenderContext::Render() {
 
   return PresentFrame();
 }
+
+void TRenderContext::SetRoot(TComponent &component) { root_ = &component; }
 } // namespace tuix

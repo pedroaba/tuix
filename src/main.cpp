@@ -3,6 +3,7 @@
 #include <SDL3/SDL_main.h>
 
 #include "rendering/render_context.hpp"
+#include "tuix/components/box.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
@@ -50,8 +51,13 @@ int main(int argc, char *argv[]) {
   int exitCode = 0;
 
   {
+    tuix::TBox box({.bounds = {40, 40, 180, 60},
+                    .background = {0, 0, 255, 255},
+                    .radius = 8});
+
     // RenderContext owns the texture and Skia surface
     tuix::TRenderContext graphics(renderer);
+    graphics.SetRoot(box);
 
     bool running = true;
     bool needsResize = true;
