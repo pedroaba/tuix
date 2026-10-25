@@ -32,7 +32,7 @@ public:
   std::optional<TLayoutAlignment> GetAlignSelf() const { return alignSelf_; }
 
 private:
-  int flexGrow_ = 0;
+  float flexGrow_ = 0.0f;
   std::optional<TLayoutAlignment> alignSelf_;
 };
 
