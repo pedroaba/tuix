@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "tuix/components/component.hpp"
+#include "tuix/layout/direction.hpp"
 
 constexpr float DEFAULT_TCONTAINER_PADDING = 16.0f;
 constexpr float DEFAULT_TCONTAINER_GAP = 12.0f;
@@ -13,6 +14,7 @@ namespace tuix {
 struct TContainerProps {
   float padding = DEFAULT_TCONTAINER_PADDING;
   float gap = DEFAULT_TCONTAINER_GAP;
+  tuix::TLayoutDirection direction = TLayoutDirection::Vertical;
 };
 
 class TContainer final : public TComponent {

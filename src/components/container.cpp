@@ -1,4 +1,5 @@
 #include "tuix/components/container.hpp"
+#include "tuix/layout/direction.hpp"
 #include "tuix/layout/size.hpp"
 
 #include <algorithm>
@@ -18,33 +19,59 @@ void TContainer::AddChild(std::unique_ptr<TComponent> child) {
 
 Size TContainer::Measure() const {
   // formulas:
+
+  // Vertical
   // W = max(children_widths) + 2(padding)
-  // H = sum(children_heights) + 2(padding) + 2(gap)
+  // H = sum(children_heights) + 2(padding) + (N - 1)(gap)
+
+  // Horizontal
+  // H = max(children_heights) + 2(padding)
+  // W = sum(children_widths) + 2(padding) + (N - 1)(gap)
 
   // Descobrir a maior largura entre os filhos
   const int totalOfChildren = GetTotalOfChildren();
-  float biggerWidth = 0.0f;
+  float containerWidth = 0.0f;
+  float containerHeight = 0.0f;
+
   for (int i = 0; i < totalOfChildren; i++) {
     float currentChildWidth = children_.at(i)->Measure().width;
-    if (biggerWidth < currentChildWidth) {
-      biggerWidth = currentChildWidth;
+    float currentChildHeight = children_.at(i)->Measure().height;
+
+    switch (props_.direction) {
+    case tuix::TLayoutDirection::Vertical:
+      if (containerWidth < currentChildWidth) {
+        containerWidth = currentChildWidth;
+      }
+
+      containerHeight += currentChildHeight;
+      break;
+    case tuix::TLayoutDirection::Horizontal:
+      if (containerHeight < currentChildHeight) {
+        containerHeight = currentChildHeight;
+      }
+
+      containerWidth += currentChildWidth;
+      break;
     }
   }
 
-  // Somar todas as alturas
-  float heightOfAllChild = 0.0f;
-  for (int i = 0; i < totalOfChildren; i++) {
-    heightOfAllChild += children_.at(i)->Measure().height;
+  if (props_.direction == tuix::TLayoutDirection::Vertical) {
+    // Adicionar gaps somente entre os filhos
+    containerWidth += 2 * props_.padding;
+
+    // Adicionar padding nas duas extremidades
+    float gapMultiplier = std::max(0, totalOfChildren - 1);
+    containerHeight += (2 * props_.padding) + (gapMultiplier * props_.gap);
+  } else if (props_.direction == tuix::TLayoutDirection::Vertical) {
+    // Adicionar gaps somente entre os filhos
+    containerHeight += 2 * props_.padding;
+
+    // Adicionar padding nas duas extremidades
+    float gapMultiplier = std::max(0, totalOfChildren - 1);
+    containerWidth += (2 * props_.padding) + (gapMultiplier * props_.gap);
   }
 
-  // Adicionar gaps somente entre os filhos
-  biggerWidth += 2 * props_.padding;
-
-  // Adicionar padding nas duas extremidades
-  float gapMultiplier = std::max(0, totalOfChildren - 1);
-  heightOfAllChild += (2 * props_.padding) + (gapMultiplier * props_.gap);
-
-  return tuix::Size{.width = biggerWidth, .height = heightOfAllChild};
+  return tuix::Size{.width = containerWidth, .height = containerHeight};
 }
 
 int TContainer::GetTotalOfChildren() const { return children_.size(); }
@@ -53,13 +80,12 @@ void TContainer::Arrange(Rect bounds) {
   bounds_ = bounds;
 
   // 1. Calcular o X inicial considerando padding
-  float initialX = bounds_.x + props_.padding;
+  float currentX = bounds_.x + props_.padding;
 
   // 2. Calcular o Y inicial considerando padding
-  float initialY = bounds_.y + props_.padding;
+  float currentY = bounds_.y + props_.padding;
 
   // 3. Percorrer children_
-  float currentY = initialY;
   const int totalOfChildren = GetTotalOfChildren();
   for (int i = 0; i < totalOfChildren; i++) {
     // 4. Consultar Measure() de cada filho
@@ -67,7 +93,7 @@ void TContainer::Arrange(Rect bounds) {
 
     // 5. Chamar Arrange() passando o Rect calculado
     Rect childBounds = Rect({
-        .x = initialX,
+        .x = currentX,
         .y = currentY,
         .width = childSize.width,
         .height = childSize.height,
@@ -76,7 +102,14 @@ void TContainer::Arrange(Rect bounds) {
     children_.at(i)->Arrange(childBounds);
 
     // 6. Avançar Y usando altura + gap
-    currentY += props_.gap + childSize.height;
+    switch (props_.direction) {
+    case tuix::TLayoutDirection::Horizontal:
+      currentX += props_.gap + childSize.width;
+      break;
+    case tuix::TLayoutDirection::Vertical:
+      currentY += props_.gap + childSize.height;
+      break;
+    }
   }
 }
 

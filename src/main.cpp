@@ -1,10 +1,13 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <algorithm>
+#include <memory>
 
 #include "rendering/render_context.hpp"
 #include "tuix/components/box.hpp"
 #include "tuix/components/container.hpp"
+#include "tuix/layout/direction.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
@@ -52,10 +55,25 @@ int main(int argc, char *argv[]) {
   int exitCode = 0;
 
   {
-    tuix::TContainer root = tuix::TContainer({.gap = 40.0f});
-    root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
+    tuix::TContainer root = tuix::TContainer({.gap = 4.0f});
+
+    tuix::TContainer horizontal =
+        tuix::TContainer({.padding = 0.0f,
+                          .gap = 4.0f,
+                          .direction = tuix::TLayoutDirection::Horizontal});
+    horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {120, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
 
+    horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
+        .size = {480, 60}, .background = {0, 255, 0, 255}, .radius = 8}));
+
+    horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
+        .size = {280, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
+
+    root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
+        .size = {170, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
+
+    root.AddChild(std::make_unique<tuix::TContainer>(std::move(horizontal)));
     root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {480, 60}, .background = {0, 255, 0, 255}, .radius = 8}));
 
