@@ -1,6 +1,7 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <algorithm>
 #include <memory>
 
 #include "rendering/render_context.hpp"
@@ -64,15 +65,20 @@ int main(int argc, char *argv[]) {
     tuix::TContainer horizontal =
         tuix::TContainer({.padding = 0.0f,
                           .gap = 4.0f,
-                          .direction = tuix::TLayoutDirection::Horizontal});
+                          .direction = tuix::TLayoutDirection::Horizontal,
+                          .alignment = tuix::TLayoutAlignment::Start});
+    horizontal.SetAlignSelf(tuix::TLayoutAlignment::Stretch);
     horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {120, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
+        .size = {20, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
+
+    auto greenBox = std::make_unique<tuix::TBox>(tuix::TBoxProps{
+        .size = {10, 60}, .background = {0, 255, 0, 255}, .radius = 8});
+    greenBox->SetFlexGrow(2);
+
+    horizontal.AddChild(std::move(greenBox));
 
     horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {480, 60}, .background = {0, 255, 0, 255}, .radius = 8}));
-
-    horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {280, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
+        .size = {100, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
 
     root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {170, 60}, .background = {0, 0, 255, 255}, .radius = 8}));

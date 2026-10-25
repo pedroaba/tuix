@@ -1,5 +1,4 @@
 #include "tuix/components/container.hpp"
-#include "tuix/core/factory/float.hpp"
 #include "tuix/core/utility/conversions.hpp"
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
@@ -33,8 +32,8 @@ TSize TContainer::Measure() const {
 
   // Descobrir a maior largura entre os filhos
   const int totalOfChildren = GetTotalOfChildren();
-  float containerWidth = tuix::make_default_float();
-  float containerHeight = tuix::make_default_float();
+  float containerWidth = 0.0f;
+  float containerHeight = 0.0f;
 
   for (int i = 0; i < totalOfChildren; i++) {
     float currentChildWidth = children_.at(i)->Measure().width;
@@ -100,12 +99,14 @@ void TContainer::Arrange(TRect bounds) {
       isVertical ? availableWidth : availableHeight;
 
   // 4. Calcular o tamanho total dos filhos
-  float contentMainSize = tuix::make_default_float();
+  float contentMainSize = 0.0f;
+  float totalGrow = 0.0f;
 
   for (const auto &child : children_) {
     const TSize childSize = child->Measure();
 
     contentMainSize += isVertical ? childSize.height : childSize.width;
+    totalGrow += child->GetFlexGrow();
   }
 
   // 5. Incluir os gaps originais
@@ -114,11 +115,11 @@ void TContainer::Arrange(TRect bounds) {
   contentMainSize += gapCount * props_.gap;
 
   // 6. Calcular o espaço livre
-  const float freeSpace =
-      std::max(tuix::make_default_float(), availableMainSize - contentMainSize);
+  const float freeSpace = std::max(0.0f, availableMainSize - contentMainSize);
+  const float remainingFreeSpace = totalGrow > 0.0f ? 0.0f : freeSpace;
 
   // 7. Resolver o justify
-  float mainOffset = tuix::make_default_float();
+  float mainOffset = 0.0f;
   float effectiveGap = props_.gap;
 
   switch (props_.justify) {
@@ -126,16 +127,16 @@ void TContainer::Arrange(TRect bounds) {
     break;
 
   case TLayoutJustify::Center:
-    mainOffset = freeSpace / tuix::convert_to_float(2);
+    mainOffset = remainingFreeSpace / tuix::convert_to_float(2);
     break;
 
   case TLayoutJustify::End:
-    mainOffset = freeSpace;
+    mainOffset = remainingFreeSpace;
     break;
 
   case TLayoutJustify::SpaceBetween:
     if (gapCount > 0) {
-      effectiveGap += freeSpace / gapCount;
+      effectiveGap += remainingFreeSpace / gapCount;
     }
     break;
   }
@@ -153,16 +154,37 @@ void TContainer::Arrange(TRect bounds) {
 
   // 9. Posicionar cada filho
   for (const auto &child : children_) {
-    const TSize childSize = child->Measure();
+    TSize childSize = child->Measure();
+    float extraSpace = 0.0f;
+
+    if (totalGrow > 0.0f) {
+      extraSpace = freeSpace * (child->GetFlexGrow() / totalGrow);
+    }
+
+    if (isVertical) {
+      childSize.height += extraSpace;
+    } else {
+      childSize.width += extraSpace;
+    }
 
     const float childCrossSize =
         isVertical ? childSize.width : childSize.height;
 
     // Resolver o alignment individual
-    float crossOffset = tuix::make_default_float();
+    float crossOffset = 0.0f;
+    const TLayoutAlignment childAlignment =
+        child->GetAlignSelf().value_or(props_.alignment);
 
-    switch (props_.alignment) {
+    switch (childAlignment) {
     case TLayoutAlignment::Start:
+      break;
+
+    case TLayoutAlignment::Stretch:
+      if (isVertical) {
+        childSize.width = availableCrossSize;
+      } else {
+        childSize.height = availableCrossSize;
+      }
       break;
 
     case TLayoutAlignment::Center:
@@ -176,11 +198,10 @@ void TContainer::Arrange(TRect bounds) {
     }
 
     // 10. Construir o Rect final
-    TRect childBounds{
-        .x = currentX + (isVertical ? crossOffset : tuix::make_default_float()),
-        .y = currentY + (isVertical ? tuix::make_default_float() : crossOffset),
-        .width = childSize.width,
-        .height = childSize.height};
+    TRect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
+                      .y = currentY + (isVertical ? 0.0f : crossOffset),
+                      .width = childSize.width,
+                      .height = childSize.height};
 
     child->Arrange(childBounds);
 
