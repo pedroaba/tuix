@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
         needsResize = false;
       }
 
-      if (!graphics.RenderFrame() || !graphics.PresentFrame()) {
+      if (!graphics.Render()) {
         SDL_Log("Rendering failed: %s", SDL_GetError());
         exitCode = 1;
         break;

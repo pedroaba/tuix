@@ -23,6 +23,8 @@ public:
   bool PresentFrame();
   bool DrawCurrentFrame();
 
+  bool Render();
+
 private:
   SDL_Renderer *renderer_ = nullptr;
   SDL_Texture *texture_ = nullptr;

@@ -116,11 +116,7 @@ bool TRenderContext::DrawCurrentFrame() {
   }
 
   if (w == currentRenderSize_.first && h == currentRenderSize_.second) {
-    if (!RenderFrame()) {
-      return false;
-    }
-
-    return PresentFrame();
+    return Render();
   }
 
   // 2. Se mudou, executar Resize()
@@ -132,6 +128,10 @@ bool TRenderContext::DrawCurrentFrame() {
   currentRenderSize_.second = h;
 
   // 3. Executar RenderFrame() e PresentFrame()
+  return Render();
+}
+
+bool TRenderContext::Render() {
   if (!RenderFrame()) {
     return false;
   }
