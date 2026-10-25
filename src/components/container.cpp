@@ -1,6 +1,7 @@
 #include "tuix/components/container.hpp"
 #include "tuix/layout/size.hpp"
 
+#include <algorithm>
 #include <utility>
 
 namespace tuix {
@@ -22,7 +23,7 @@ Size TContainer::Measure() const {
 
   // Descobrir a maior largura entre os filhos
   const int totalOfChildren = GetTotalOfChildren();
-  float biggerWidth = -1.0f;
+  float biggerWidth = 0.0f;
   for (int i = 0; i < totalOfChildren; i++) {
     float currentChildWidth = children_.at(i)->Measure().width;
     if (biggerWidth < currentChildWidth) {
@@ -40,7 +41,8 @@ Size TContainer::Measure() const {
   biggerWidth += 2 * props_.padding;
 
   // Adicionar padding nas duas extremidades
-  heightOfAllChild += (2 * props_.padding) + (2 * props_.gap);
+  float gapMultiplier = std::max(0, totalOfChildren - 1);
+  heightOfAllChild += (2 * props_.padding) + (gapMultiplier * props_.gap);
 
   return tuix::Size{.width = biggerWidth, .height = heightOfAllChild};
 }
