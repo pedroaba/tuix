@@ -8,6 +8,7 @@
 #include "tuix/components/container.hpp"
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
+#include "tuix/layout/justify.hpp"
 
 constexpr int SCREEN_WIDTH = 900;
 constexpr int SCREEN_HEIGHT = 600;
@@ -55,8 +56,10 @@ int main(int argc, char *argv[]) {
   int exitCode = 0;
 
   {
-    tuix::TContainer root = tuix::TContainer(
-        {.gap = 4.0f, .alignment = tuix::TLayoutAlignment::Start});
+    tuix::TContainer root =
+        tuix::TContainer({.gap = 4.0f,
+                          .alignment = tuix::TLayoutAlignment::Start,
+                          .justify = tuix::TLayoutJustify::SpaceBetween});
 
     tuix::TContainer horizontal =
         tuix::TContainer({.padding = 0.0f,

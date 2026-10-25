@@ -6,6 +6,7 @@
 #include "tuix/components/component.hpp"
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/direction.hpp"
+#include "tuix/layout/justify.hpp"
 
 constexpr float DEFAULT_TCONTAINER_PADDING = 16.0f;
 constexpr float DEFAULT_TCONTAINER_GAP = 12.0f;
@@ -17,6 +18,7 @@ struct TContainerProps {
   float gap = DEFAULT_TCONTAINER_GAP;
   tuix::TLayoutDirection direction = TLayoutDirection::Vertical;
   tuix::TLayoutAlignment alignment = TLayoutAlignment::Start;
+  tuix::TLayoutJustify justify = TLayoutJustify::Start;
 };
 
 class TContainer final : public TComponent {

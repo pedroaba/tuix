@@ -80,67 +80,110 @@ int TContainer::GetTotalOfChildren() const { return children_.size(); }
 void TContainer::Arrange(Rect bounds) {
   bounds_ = bounds;
 
-  // 1. Calcular o X inicial considerando padding
-  float currentX = bounds_.x + props_.padding;
+  // 1. Identificar a direção
+  const bool isVertical = props_.direction == TLayoutDirection::Vertical;
+  const int totalOfChildren = GetTotalOfChildren();
 
-  // 2. Calcular o Y inicial considerando padding
+  // 2. Calcular a área interna
+  const float availableWidth =
+      std::max(0.0f, bounds_.width - (2.0f * props_.padding));
+
+  const float availableHeight =
+      std::max(0.0f, bounds_.height - (2.0f * props_.padding));
+
+  // 3. Identificar os eixos
+  const float availableMainSize = isVertical ? availableHeight : availableWidth;
+
+  const float availableCrossSize =
+      isVertical ? availableWidth : availableHeight;
+
+  // 4. Calcular o tamanho total dos filhos
+  float contentMainSize = 0.0f;
+
+  for (const auto &child : children_) {
+    const Size childSize = child->Measure();
+
+    contentMainSize += isVertical ? childSize.height : childSize.width;
+  }
+
+  // 5. Incluir os gaps originais
+  const int gapCount = std::max(0, totalOfChildren - 1);
+
+  contentMainSize += gapCount * props_.gap;
+
+  // 6. Calcular o espaço livre
+  const float freeSpace = std::max(0.0f, availableMainSize - contentMainSize);
+
+  // 7. Resolver o justify
+  float mainOffset = 0.0f;
+  float effectiveGap = props_.gap;
+
+  switch (props_.justify) {
+  case TLayoutJustify::Start:
+    break;
+
+  case TLayoutJustify::Center:
+    mainOffset = freeSpace / 2.0f;
+    break;
+
+  case TLayoutJustify::End:
+    mainOffset = freeSpace;
+    break;
+
+  case TLayoutJustify::SpaceBetween:
+    if (gapCount > 0) {
+      effectiveGap += freeSpace / gapCount;
+    }
+    break;
+  }
+
+  // 8. Definir a posição inicial
+  float currentX = bounds_.x + props_.padding;
   float currentY = bounds_.y + props_.padding;
 
-  // 3. Percorrer children_
-  const int totalOfChildren = GetTotalOfChildren();
-  const float availableWidth = bounds_.width - (2.0f * props_.padding);
-  const float availableHeight = bounds_.height - (2.0f * props_.padding);
+  // Aplicar o justify no eixo principal
+  if (isVertical) {
+    currentY += mainOffset;
+  } else {
+    currentX += mainOffset;
+  }
 
-  for (int i = 0; i < totalOfChildren; i++) {
-    // 4. Consultar Measure() de cada filho
-    Size childSize = children_.at(i)->Measure();
+  // 9. Posicionar cada filho
+  for (const auto &child : children_) {
+    const Size childSize = child->Measure();
 
-    float offsetX = 0.0f;
-    float offsetY = 0.0f;
-    const bool isVertical = props_.direction == TLayoutDirection::Vertical;
-
-    // Espaço livre no eixo transversal
-    const float availableSize = isVertical ? availableWidth : availableHeight;
     const float childCrossSize =
         isVertical ? childSize.width : childSize.height;
 
-    float offset = 0.0f;
+    // Resolver o alignment individual
+    float crossOffset = 0.0f;
 
     switch (props_.alignment) {
     case TLayoutAlignment::Start:
-      offset = 0.0f;
       break;
 
     case TLayoutAlignment::Center:
-      offset = (availableSize - childCrossSize) / 2.0f;
+      crossOffset = (availableCrossSize - childCrossSize) / 2.0f;
       break;
 
     case TLayoutAlignment::End:
-      offset = availableSize - childCrossSize;
+      crossOffset = availableCrossSize - childCrossSize;
       break;
     }
 
+    // 10. Construir o Rect final
+    Rect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
+                     .y = currentY + (isVertical ? 0.0f : crossOffset),
+                     .width = childSize.width,
+                     .height = childSize.height};
+
+    child->Arrange(childBounds);
+
+    // 11. Avançar para o próximo filho
     if (isVertical) {
-      offsetX = offset;
+      currentY += childSize.height + effectiveGap;
     } else {
-      offsetY = offset;
-    }
-
-    // 5. Chamar Arrange() passando o Rect calculado
-    Rect childBounds = Rect({
-        .x = currentX + offsetX,
-        .y = currentY + offsetY,
-        .width = childSize.width,
-        .height = childSize.height,
-    });
-
-    children_.at(i)->Arrange(childBounds);
-
-    // 6. Avançar Y usando altura + gap
-    if (isVertical) {
-      currentY += childSize.height + props_.gap;
-    } else {
-      currentX += childSize.width + props_.gap;
+      currentX += childSize.width + effectiveGap;
     }
   }
 }
