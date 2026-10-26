@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
     auto redBox = std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {200, 60}, .background = {255, 0, 0, 255}, .radius = 8});
     redBox->SetMinWidth(100);
+    redBox->SetMaxWidth(150);
     horizontal.AddChild(std::move(redBox));
 
     root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{

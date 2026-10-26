@@ -7,6 +7,21 @@
 #include <algorithm>
 #include <utility>
 
+namespace {
+struct TFlexItem {
+  float baseSize = 0.0f;
+  float finalSize = 0.0f;
+
+  float minSize = 0.0f;
+  float maxSize = 0.0f;
+
+  float grow = 0.0f;
+  float shrink = 1.0f;
+
+  bool frozen = false;
+};
+} // namespace
+
 namespace tuix {
 
 TContainer::TContainer(TContainerProps props) : props_(props) {}
@@ -79,6 +94,7 @@ TSize TContainer::Measure() const {
 int TContainer::GetTotalOfChildren() const { return children_.size(); }
 
 std::vector<float> TContainer::ResolveMainSizes(float availableMainSize) const {
+  const float EPSILON = 0.001f;
   const bool isVertical = props_.direction == TLayoutDirection::Vertical;
   const int gapCount = std::max(0, GetTotalOfChildren() - 1);
 
@@ -87,7 +103,9 @@ std::vector<float> TContainer::ResolveMainSizes(float availableMainSize) const {
       std::max(0.0f, availableMainSize - gapCount * props_.gap);
 
   std::vector<float> baseSizes;
-  baseSizes.reserve(children_.size());
+  std::vector<TFlexItem> items;
+
+  items.reserve(children_.size());
 
   float totalBaseSize = 0.0f;
   float totalGrow = 0.0f;
@@ -96,46 +114,121 @@ std::vector<float> TContainer::ResolveMainSizes(float availableMainSize) const {
   // 1. Medir os filhos
   for (const auto &child : children_) {
     const TSize size = child->Measure();
+    const TSize minSize = child->GetMinSize();
+    const TSize maxSize = child->GetMaxSize();
 
-    const float baseSize = isVertical ? size.height : size.width;
+    const float minimum =
+        std::max(0.0f, isVertical ? minSize.height : minSize.width);
 
+    const float maximum =
+        std::max(minimum, isVertical ? maxSize.height : maxSize.width);
+
+    const float desiredSize = isVertical ? size.height : size.width;
+    const float baseSize = std::clamp(desiredSize, minimum, maximum);
+
+    TFlexItem item{.baseSize = baseSize,
+                   .finalSize = baseSize,
+                   .minSize = minimum,
+                   .maxSize = maximum,
+                   .grow = std::max(0.0f, child->GetFlexGrow()),
+                   .shrink = std::max(0.0f, child->GetFlexShrink()),
+                   .frozen = false};
     baseSizes.push_back(baseSize);
 
+    items.push_back(item);
     totalBaseSize += baseSize;
-    totalGrow += child->GetFlexGrow();
-
-    totalScaledShrink += child->GetFlexShrink() * baseSize;
   }
 
-  // 2. Calcular espaço sobrando ou faltante
-  const float freeSpace = std::max(0.0f, availableForChildren - totalBaseSize);
-  const float deficit = std::max(0.0f, totalBaseSize - availableForChildren);
+  // 3. Descobrir se precisamos crescer ou encolher
+  const float difference = availableForChildren - totalBaseSize;
 
-  // 3. Resolver as dimensões finais
-  std::vector<float> finalSizes;
-  finalSizes.reserve(children_.size());
+  const bool growing = difference > EPSILON;
+  const bool shrinking = difference < -EPSILON;
 
-  for (std::size_t i = 0; i < children_.size(); ++i) {
-    const auto &child = children_[i];
+  if (growing || shrinking) {
+    while (true) {
+      // Recalcular usando os itens congelados
+      float occupiedSize = 0.0f;
+      float totalWeight = 0.0f;
 
-    float finalSize = baseSizes[i];
+      for (const auto &item : items) {
+        occupiedSize += item.frozen ? item.finalSize : item.baseSize;
 
-    if (freeSpace > 0.0f && totalGrow > 0.0f) {
-      finalSize += freeSpace * (child->GetFlexGrow() / totalGrow);
-    } else if (deficit > 0.0f && totalScaledShrink > 0.0f) {
-      const float scaledShrink = child->GetFlexShrink() * baseSizes[i];
+        if (!item.frozen) {
+          totalWeight += growing ? item.grow : item.shrink * item.baseSize;
+        }
+      }
 
-      finalSize -= deficit * (scaledShrink / totalScaledShrink);
+      // Espaço que ainda precisamos distribuir
+      const float remainingSpace = availableForChildren - occupiedSize;
+
+      // Verificar se terminamos
+      if (growing && remainingSpace <= EPSILON) {
+        break;
+      }
+
+      if (shrinking && remainingSpace >= -EPSILON) {
+        break;
+      }
+
+      // Não há mais componentes elegíveis
+      if (totalWeight <= EPSILON) {
+        break;
+      }
+
+      // Calcular propostas sem alterar os itens
+      std::vector<float> proposals(items.size());
+      bool anyFrozen = false;
+
+      for (std::size_t i = 0; i < items.size(); ++i) {
+        auto &item = items[i];
+        if (item.frozen) {
+          continue;
+        }
+
+        const float weight = growing ? item.grow : item.shrink * item.baseSize;
+        const float proposedSize =
+            item.baseSize + remainingSpace * (weight / totalWeight);
+
+        proposals[i] = proposedSize;
+
+        // Atingiu o máximo durante o crescimento
+        if (growing && proposedSize > item.maxSize + EPSILON) {
+          item.finalSize = item.maxSize;
+          item.frozen = true;
+          anyFrozen = true;
+        } else if (shrinking && proposedSize < item.minSize - EPSILON) {
+          // Atingiu o mínimo durante o encolhimento
+          item.finalSize = item.minSize;
+          item.frozen = true;
+          anyFrozen = true;
+        }
+      }
+
+      // Se congelamos algum item, recalcular
+      if (anyFrozen) {
+        continue;
+      }
+
+      // Nenhum item atingiu um limite:
+      // aceitar as propostas e finalizar
+      for (std::size_t i = 0; i < items.size(); ++i) {
+        if (!items[i].frozen) {
+          items[i].finalSize =
+              std::clamp(proposals[i], items[i].minSize, items[i].maxSize);
+        }
+      }
+
+      break;
     }
+  }
 
-    // Respeitar o tamanho mínimo no eixo principal
-    const float minSize =
-        isVertical ? child->GetMinHeight() : child->GetMinWidth();
+  // 5. Retornar somente as dimensões finais
+  std::vector<float> finalSizes;
+  finalSizes.reserve(items.size());
 
-    finalSize = std::max(finalSize, minSize);
-    finalSize = std::max(finalSize, 0.0f);
-
-    finalSizes.push_back(finalSize);
+  for (const auto &item : items) {
+    finalSizes.push_back(item.finalSize);
   }
 
   return finalSizes;

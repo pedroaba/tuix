@@ -61,13 +61,13 @@ public:
 
   void SetMaxWidth(float maxWidth) {
     if (maxWidth >= 0 && maxWidth >= minSize_.width) {
-      minSize_.width = maxWidth;
+      maxSize_.width = maxWidth;
     }
   }
 
   void SetMaxHeight(float maxHeight) {
     if (maxHeight >= 0 && maxHeight >= minSize_.height) {
-      minSize_.height = maxHeight;
+      maxSize_.height = maxHeight;
     }
   }
 
