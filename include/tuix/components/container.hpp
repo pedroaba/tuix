@@ -36,6 +36,8 @@ public:
   int GetTotalOfChildren() const;
 
 private:
+  std::vector<float> ResolveMainSizes(float availableMainSize) const;
+
   std::vector<std::unique_ptr<TComponent>> children_;
 
   TContainerProps props_;

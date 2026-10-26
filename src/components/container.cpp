@@ -78,6 +78,69 @@ TSize TContainer::Measure() const {
 
 int TContainer::GetTotalOfChildren() const { return children_.size(); }
 
+std::vector<float> TContainer::ResolveMainSizes(float availableMainSize) const {
+  const bool isVertical = props_.direction == TLayoutDirection::Vertical;
+  const int gapCount = std::max(0, GetTotalOfChildren() - 1);
+
+  // Espaço disponível, descontando os gaps
+  const float availableForChildren =
+      std::max(0.0f, availableMainSize - gapCount * props_.gap);
+
+  std::vector<float> baseSizes;
+  baseSizes.reserve(children_.size());
+
+  float totalBaseSize = 0.0f;
+  float totalGrow = 0.0f;
+  float totalScaledShrink = 0.0f;
+
+  // 1. Medir os filhos
+  for (const auto &child : children_) {
+    const TSize size = child->Measure();
+
+    const float baseSize = isVertical ? size.height : size.width;
+
+    baseSizes.push_back(baseSize);
+
+    totalBaseSize += baseSize;
+    totalGrow += child->GetFlexGrow();
+
+    totalScaledShrink += child->GetFlexShrink() * baseSize;
+  }
+
+  // 2. Calcular espaço sobrando ou faltante
+  const float freeSpace = std::max(0.0f, availableForChildren - totalBaseSize);
+  const float deficit = std::max(0.0f, totalBaseSize - availableForChildren);
+
+  // 3. Resolver as dimensões finais
+  std::vector<float> finalSizes;
+  finalSizes.reserve(children_.size());
+
+  for (std::size_t i = 0; i < children_.size(); ++i) {
+    const auto &child = children_[i];
+
+    float finalSize = baseSizes[i];
+
+    if (freeSpace > 0.0f && totalGrow > 0.0f) {
+      finalSize += freeSpace * (child->GetFlexGrow() / totalGrow);
+    } else if (deficit > 0.0f && totalScaledShrink > 0.0f) {
+      const float scaledShrink = child->GetFlexShrink() * baseSizes[i];
+
+      finalSize -= deficit * (scaledShrink / totalScaledShrink);
+    }
+
+    // Respeitar o tamanho mínimo no eixo principal
+    const float minSize =
+        isVertical ? child->GetMinHeight() : child->GetMinWidth();
+
+    finalSize = std::max(finalSize, minSize);
+    finalSize = std::max(finalSize, 0.0f);
+
+    finalSizes.push_back(finalSize);
+  }
+
+  return finalSizes;
+}
+
 void TContainer::Arrange(TRect bounds) {
   bounds_ = bounds;
 
@@ -98,29 +161,17 @@ void TContainer::Arrange(TRect bounds) {
   const float availableCrossSize =
       isVertical ? availableWidth : availableHeight;
 
-  // 4. Calcular o tamanho total dos filhos
-  float contentMainSize = 0.0f;
-  float totalGrow = 0.0f;
-  float totalScaledShrink = 0.0f;
-
-  for (const auto &child : children_) {
-    const TSize childSize = child->Measure();
-
-    const float baseMainSize = isVertical ? childSize.height : childSize.width;
-    contentMainSize += baseMainSize;
-    totalGrow += child->GetFlexGrow();
-
-    totalScaledShrink += child->GetFlexShrink() * baseMainSize;
-  }
+  const std::vector<float> mainSizes = ResolveMainSizes(availableMainSize);
 
   // 5. Incluir os gaps originais
   const int gapCount = std::max(0, totalOfChildren - 1);
-  contentMainSize += gapCount * props_.gap;
+  float contentMainSize = gapCount * props_.gap;
+  for (float size : mainSizes) {
+    contentMainSize += size;
+  }
 
-  // 6. Calcular o espaço livre
-  const float freeSpace = std::max(0.0f, availableMainSize - contentMainSize);
-  const float remainingFreeSpace = totalGrow > 0.0f ? 0.0f : freeSpace;
-  const float deficit = std::max(0.0f, contentMainSize - availableMainSize);
+  const float remainingFreeSpace =
+      std::max(0.0f, availableMainSize - contentMainSize);
 
   // 7. Resolver o justify
   float mainOffset = 0.0f;
@@ -157,24 +208,14 @@ void TContainer::Arrange(TRect bounds) {
   }
 
   // 9. Posicionar cada filho
-  for (const auto &child : children_) {
+  for (std::size_t i = 0; i < children_.size(); ++i) {
+    const auto &child = children_[i];
     TSize childSize = child->Measure();
-    float extraSpace = 0.0f;
-    float reduction = 0.0f;
-
-    if (freeSpace > 0.0f && totalGrow > 0) {
-      extraSpace = freeSpace * (child->GetFlexGrow() / totalGrow);
-    } else if (deficit > 0.0f && totalScaledShrink > 0.0f) {
-      const float baseMainSize =
-          isVertical ? childSize.height : childSize.width;
-      const float scaledShrink = child->GetFlexShrink() * baseMainSize;
-      reduction = deficit * (scaledShrink / totalScaledShrink);
-    }
 
     if (isVertical) {
-      childSize.height += extraSpace - reduction;
+      childSize.height = mainSizes.at(i);
     } else {
-      childSize.width += extraSpace - reduction;
+      childSize.width = mainSizes.at(i);
     }
 
     const float childCrossSize =
@@ -207,13 +248,13 @@ void TContainer::Arrange(TRect bounds) {
       break;
     }
 
-    if (child->GetMinHeight() > 0) {
-      childSize.height = std::max(childSize.height, child->GetMinHeight());
-    }
+    // if (child->GetMinHeight() > 0) {
+    //   childSize.height = std::max(childSize.height, child->GetMinHeight());
+    // }
 
-    if (child->GetMinWidth() > 0) {
-      childSize.width = std::max(childSize.width, child->GetMinWidth());
-    }
+    // if (child->GetMinWidth() > 0) {
+    //   childSize.width = std::max(childSize.width, child->GetMinWidth());
+    // }
 
     // 10. Construir o Rect final
     TRect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
