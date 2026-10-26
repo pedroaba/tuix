@@ -207,6 +207,14 @@ void TContainer::Arrange(TRect bounds) {
       break;
     }
 
+    if (child->GetMinHeight() > 0) {
+      childSize.height = std::max(childSize.height, child->GetMinHeight());
+    }
+
+    if (child->GetMinWidth() > 0) {
+      childSize.width = std::max(childSize.width, child->GetMinWidth());
+    }
+
     // 10. Construir o Rect final
     TRect childBounds{.x = currentX + (isVertical ? crossOffset : 0.0f),
                       .y = currentY + (isVertical ? 0.0f : crossOffset),

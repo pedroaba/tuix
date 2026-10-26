@@ -77,8 +77,10 @@ int main(int argc, char *argv[]) {
 
     horizontal.AddChild(std::move(greenBox));
 
-    horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {200, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
+    auto redBox = std::make_unique<tuix::TBox>(tuix::TBoxProps{
+        .size = {200, 60}, .background = {255, 0, 0, 255}, .radius = 8});
+    redBox->SetMinWidth(100);
+    horizontal.AddChild(std::move(redBox));
 
     root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {170, 60}, .background = {0, 0, 255, 255}, .radius = 8}));

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "tuix/layout/alignment.hpp"
 #include "tuix/layout/size.hpp"
 #include "tuix/rendering/rect.hpp"
@@ -26,10 +28,24 @@ public:
   std::optional<TLayoutAlignment> GetAlignSelf() const { return alignSelf_; }
   float GetFlexShrink() const { return flexShrink_; }
 
+  void SetMinSize(TSize size) {
+    minSize_.width = std::max(0.0f, size.width);
+    minSize_.height = std::max(0.0f, size.height);
+  }
+
+  void SetMinWidth(float minWidth) { minSize_.width = minWidth; }
+  void SetMinHeight(float minHeight) { minSize_.height = minHeight; }
+
+  TSize GetMinSize() const { return minSize_; }
+  float GetMinWidth() const { return minSize_.width; }
+  float GetMinHeight() const { return minSize_.height; }
+
 private:
   float flexGrow_ = 0.0f;
   float flexShrink_ = 1.0f;
   std::optional<TLayoutAlignment> alignSelf_;
+
+  tuix::TSize minSize_ = {.width = 0.0f, .height = 0.0f};
 };
 
 } // namespace tuix
