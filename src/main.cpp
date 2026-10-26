@@ -69,16 +69,16 @@ int main(int argc, char *argv[]) {
                           .alignment = tuix::TLayoutAlignment::Start});
     horizontal.SetAlignSelf(tuix::TLayoutAlignment::Stretch);
     horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {20, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
+        .size = {400, 60}, .background = {0, 0, 255, 255}, .radius = 8}));
 
     auto greenBox = std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {10, 60}, .background = {0, 255, 0, 255}, .radius = 8});
+        .size = {300, 60}, .background = {0, 255, 0, 255}, .radius = 8});
     greenBox->SetFlexGrow(2);
 
     horizontal.AddChild(std::move(greenBox));
 
     horizontal.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
-        .size = {100, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
+        .size = {200, 60}, .background = {255, 0, 0, 255}, .radius = 8}));
 
     root.AddChild(std::make_unique<tuix::TBox>(tuix::TBoxProps{
         .size = {170, 60}, .background = {0, 0, 255, 255}, .radius = 8}));

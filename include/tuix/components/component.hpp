@@ -18,21 +18,17 @@ public:
 
   virtual void Paint(TRenderer &renderer) const = 0;
 
-  void SetFlexGrow(float grow) {
-    if (grow < 0) {
-      return;
-    }
-
-    flexGrow_ = grow;
-  }
-
+  void SetFlexGrow(float grow) { flexGrow_ = grow > 0 ? grow : 0; }
   void SetAlignSelf(TLayoutAlignment alignment) { alignSelf_ = alignment; }
+  void SetFlexShrink(float shrink) { flexShrink_ = shrink > 0 ? shrink : 0; }
 
   float GetFlexGrow() const { return flexGrow_; };
   std::optional<TLayoutAlignment> GetAlignSelf() const { return alignSelf_; }
+  float GetFlexShrink() const { return flexShrink_; }
 
 private:
   float flexGrow_ = 0.0f;
+  float flexShrink_ = 1.0f;
   std::optional<TLayoutAlignment> alignSelf_;
 };
 
